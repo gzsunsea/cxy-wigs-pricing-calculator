@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CXY Wigs 商品定价工具</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17211d;
+      --muted: #607069;
+      --line: #d8e2dd;
+      --panel: #f6faf8;
+      --accent: #0d6b57;
+      --accent-dark: #094b3d;
+      --warn: #9a5d18;
+      --danger: #9f2f2f;
+      --bg: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      line-height: 1.45;
+    }
+
+    header {
+      padding: 28px 32px 20px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfdfc;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      font-weight: 760;
+      letter-spacing: 0;
+    }
+
+    header p, .note {
+      margin: 0;
+      color: var(--muted);
+      max-width: 1120px;
+    }
+
+    main {
+      padding: 24px 32px 40px;
+      display: grid;
+      gap: 24px;
+    }
+
+    .controls, .editor {
+      display: grid;
+      gap: 12px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .controls {
+      grid-template-columns: repeat(6, minmax(130px, 1fr));
+      align-items: end;
+    }
+
+    .editor {
+      grid-template-columns: 1.2fr 2fr repeat(3, minmax(100px, .6fr)) auto;
+      align-items: end;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    input, select, button {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--ink);
+      font: inherit;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 8px 10px;
+    }
+
+    button {
+      padding: 8px 12px;
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      font-weight: 740;
+      white-space: nowrap;
+    }
+
+    button.secondary {
+      background: #fff;
+      color: var(--accent-dark);
+    }
+
+    button.danger {
+      border-color: #cfb8b8;
+      background: #fff;
+      color: var(--danger);
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(150px, 1fr));
+      gap: 12px;
+    }
+
+    .metric {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 740;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 24px;
+      letter-spacing: 0;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1250px;
+    }
+
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: right;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: #f1f7f4;
+      color: #33443d;
+      font-size: 12px;
+      font-weight: 760;
+      z-index: 1;
+    }
+
+    td:first-child, td:nth-child(2), th:first-child, th:nth-child(2) {
+      text-align: left;
+    }
+
+    tbody tr:hover { background: #f9fcfa; }
+
+    .price-input { max-width: 88px; text-align: right; }
+    .margin-good { color: var(--accent-dark); font-weight: 760; }
+    .margin-watch { color: var(--warn); font-weight: 760; }
+    .margin-risk { color: var(--danger); font-weight: 760; }
+    .empty { color: var(--muted); text-align: left; padding: 18px; }
+
+    @media (max-width: 1100px) {
+      header, main { padding-left: 18px; padding-right: 18px; }
+      .controls { grid-template-columns: repeat(2, minmax(130px, 1fr)); }
+      .editor { grid-template-columns: 1fr 1fr; }
+      .summary { grid-template-columns: repeat(2, minmax(150px, 1fr)); }
+    }
+
+    @media (max-width: 620px) {
+      .controls, .editor, .summary { grid-template-columns: 1fr; }
+      h1 { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>CXY Wigs 商品定价工具</h1>
+    <p>公开在线版不预置真实供应商成本。输入商品、人民币工厂价和数量后，可自动计算加拿大落地成本、Shopify 售价、Calgary 线下标价、最低成交价、GST 和毛利率。</p>
+  </header>
+
+  <main>
+    <section class="controls" aria-label="定价参数">
+      <label>RMB/CAD 汇率
+        <input id="fxRate" type="number" step="0.0001" value="0.2035">
+      </label>
+      <label>货款 RMB
+        <input id="goodsTotal" type="number" step="1" value="4750">
+      </label>
+      <label>国际运费 RMB
+        <input id="freightTotal" type="number" step="1" value="1000">
+      </label>
+      <label>本地处理 CAD/件
+        <input id="localHandling" type="number" step="0.5" value="0">
+      </label>
+      <label>GST
+        <input id="gstRate" type="number" step="0.01" value="0.05">
+      </label>
+      <label>价格取整
+        <select id="roundMode">
+          <option value="9">尾数取 9</option>
+          <option value="whole">整数</option>
+          <option value="none">不取整</option>
+        </select>
+      </label>
+      <label>Shopify 系数
+        <input id="shopifyFactor" type="number" step="0.05" value="0.70">
+      </label>
+      <label>线下标价系数
+        <input id="offlineFactor" type="number" step="0.05" value="0.80">
+      </label>
+      <label>最低成交系数
+        <input id="floorFactor" type="number" step="0.05" value="0.60">
+      </label>
+      <label>线上可变成本率
+        <input id="onlineVariableRate" type="number" step="0.01" value="0.23">
+      </label>
+      <label>线下可变成本率
+        <input id="offlineVariableRate" type="number" step="0.01" value="0.08">
+      </label>
+      <button id="resetManualPrices" type="button">重置手动价</button>
+    </section>
+
+    <section class="summary" aria-label="汇总指标">
+      <div class="metric">
+        <span>落地系数</span>
+        <strong id="landedFactor">1.21</strong>
+      </div>
+      <div class="metric">
+        <span>每 100 RMB 落地成本</span>
+        <strong id="costPer100">C$24.63</strong>
+      </div>
+      <div class="metric">
+        <span>8折换加币倍率</span>
+        <strong id="eightMultiple">3.25x</strong>
+      </div>
+      <div class="metric">
+        <span>6折换加币倍率</span>
+        <strong id="sixMultiple">2.44x</strong>
+      </div>
+    </section>
+
+    <section class="editor" aria-label="新增商品">
+      <label>SKU
+        <input id="newSku" value="SKU-001">
+      </label>
+      <label>商品名称
+        <input id="newProduct" value="Example wig">
+      </label>
+      <label>数量
+        <input id="newQty" type="number" step="1" value="1">
+      </label>
+      <label>工厂价 RMB
+        <input id="newRmb" type="number" step="1" value="200">
+      </label>
+      <label>备注
+        <input id="newNotes" value="">
+      </label>
+      <button id="addProduct" type="button">添加商品</button>
+    </section>
+
+    <section class="actions" aria-label="操作">
+      <button id="loadExamples" type="button" class="secondary">加载示例</button>
+      <button id="clearProducts" type="button" class="danger">清空商品</button>
+      <button id="exportCsv" type="button" class="secondary">导出 CSV</button>
+    </section>
+
+    <section class="table-wrap" aria-label="SKU 定价表">
+      <table>
+        <thead>
+          <tr>
+            <th>SKU</th>
+            <th>商品</th>
+            <th>数量</th>
+            <th>工厂价 RMB</th>
+            <th>落地成本 CAD</th>
+            <th>Shopify 建议</th>
+            <th>线下标价</th>
+            <th>最低成交</th>
+            <th>手动 Shopify</th>
+            <th>线上毛利率</th>
+            <th>含 GST</th>
+            <th>手动线下</th>
+            <th>线下毛利率</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="pricingRows"></tbody>
+      </table>
+      <div id="emptyState" class="empty">还没有商品。先添加一行，或点击“加载示例”。</div>
+    </section>
+
+    <p class="note">说明：线上毛利率已扣除“线上可变成本率”，线下毛利率已扣除“线下可变成本率”。GST 只用于显示顾客支付价，不参与利润计算。公开版不保存数据到服务器，刷新页面会清空当前输入。</p>
+  </main>
+
+  <script>
+    const examples = [
+      { sku: "EXAMPLE-BOB-001", product: "12 inch bob wig", qty: 1, rmb: 200, notes: "示例数据" },
+      { sku: "EXAMPLE-LACE-001", product: "22 inch lace wig", qty: 1, rmb: 480, notes: "示例数据" },
+      { sku: "EXAMPLE-ACC-001", product: "Wig stand", qty: 10, rmb: 4, notes: "示例数据" }
+    ];
+
+    let products = [];
+    const state = { manualShopify: new Map(), manualOffline: new Map() };
+    const $ = (id) => document.getElementById(id);
+    const money = (value) => `C$${Number(value).toFixed(2)}`;
+    const pct = (value) => `${Math.round(value * 100)}%`;
+
+    function numberValue(id) {
+      return Number($(id).value || 0);
+    }
+
+    function roundPrice(value) {
+      const mode = $("roundMode").value;
+      if (mode === "none") return Math.round(value * 100) / 100;
+      if (mode === "whole") return Math.round(value);
+      if (value < 10) return Math.max(1, Math.round(value));
+      return Math.max(9, Math.ceil(value / 10) * 10 - 1);
+    }
+
+    function margin(price, cost, variableRate) {
+      if (!price) return 0;
+      return (price * (1 - variableRate) - cost) / price;
+    }
+
+    function marginClass(value) {
+      if (value >= 0.45) return "margin-good";
+      if (value >= 0.25) return "margin-watch";
+      return "margin-risk";
+    }
+
+    function getModel() {
+      const fxRate = numberValue("fxRate");
+      const goodsTotal = numberValue("goodsTotal");
+      const freightTotal = numberValue("freightTotal");
+      const landedFactor = goodsTotal > 0 ? (goodsTotal + freightTotal) / goodsTotal : 1;
+      return {
+        fxRate,
+        goodsTotal,
+        freightTotal,
+        localHandling: numberValue("localHandling"),
+        gstRate: numberValue("gstRate"),
+        shopifyFactor: numberValue("shopifyFactor"),
+        offlineFactor: numberValue("offlineFactor"),
+        floorFactor: numberValue("floorFactor"),
+        onlineVariableRate: numberValue("onlineVariableRate"),
+        offlineVariableRate: numberValue("offlineVariableRate"),
+        landedFactor,
+        rmbToLandedCad: fxRate * landedFactor
+      };
+    }
+
+    function calculateProduct(item, model) {
+      const cost = item.rmb * model.rmbToLandedCad + model.localHandling;
+      const shopifySuggested = roundPrice(item.rmb * model.shopifyFactor);
+      const offlineSuggested = roundPrice(item.rmb * model.offlineFactor);
+      const floorPrice = roundPrice(item.rmb * model.floorFactor);
+      const manualShopify = state.manualShopify.get(item.sku) ?? shopifySuggested;
+      const manualOffline = state.manualOffline.get(item.sku) ?? offlineSuggested;
+      const onlineMargin = margin(manualShopify, cost, model.onlineVariableRate);
+      const offlineMargin = margin(manualOffline, cost, model.offlineVariableRate);
+      return {
+        ...item,
+        cost,
+        shopifySuggested,
+        offlineSuggested,
+        floorPrice,
+        manualShopify,
+        manualOffline,
+        onlineMargin,
+        offlineMargin,
+        gstPrice: manualShopify * (1 + model.gstRate)
+      };
+    }
+
+    function calculate() {
+      const model = getModel();
+      $("landedFactor").textContent = model.landedFactor.toFixed(2);
+      $("costPer100").textContent = money(100 * model.rmbToLandedCad);
+      $("eightMultiple").textContent = `${(0.8 / model.rmbToLandedCad).toFixed(2)}x`;
+      $("sixMultiple").textContent = `${(0.6 / model.rmbToLandedCad).toFixed(2)}x`;
+      $("emptyState").style.display = products.length ? "none" : "block";
+
+      $("pricingRows").innerHTML = products.map((item) => {
+        const row = calculateProduct(item, model);
+        return `
+          <tr>
+            <td>${row.sku}</td>
+            <td>${row.product}</td>
+            <td>${row.qty}</td>
+            <td>¥${row.rmb}</td>
+            <td>${money(row.cost)}</td>
+            <td>${money(row.shopifySuggested)}</td>
+            <td>${money(row.offlineSuggested)}</td>
+            <td>${money(row.floorPrice)}</td>
+            <td><input class="price-input" data-kind="shopify" data-sku="${row.sku}" type="number" step="1" value="${row.manualShopify}"></td>
+            <td class="${marginClass(row.onlineMargin)}">${pct(row.onlineMargin)}</td>
+            <td>${money(row.gstPrice)}</td>
+            <td><input class="price-input" data-kind="offline" data-sku="${row.sku}" type="number" step="1" value="${row.manualOffline}"></td>
+            <td class="${marginClass(row.offlineMargin)}">${pct(row.offlineMargin)}</td>
+            <td><button class="danger" data-remove="${row.sku}" type="button">删除</button></td>
+          </tr>
+        `;
+      }).join("");
+
+      document.querySelectorAll(".price-input").forEach((input) => {
+        input.addEventListener("input", (event) => {
+          const target = event.currentTarget;
+          const map = target.dataset.kind === "shopify" ? state.manualShopify : state.manualOffline;
+          map.set(target.dataset.sku, Number(target.value || 0));
+          calculate();
+        });
+      });
+
+      document.querySelectorAll("[data-remove]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const sku = button.dataset.remove;
+          products = products.filter((product) => product.sku !== sku);
+          state.manualShopify.delete(sku);
+          state.manualOffline.delete(sku);
+          calculate();
+        });
+      });
+    }
+
+    function addProduct() {
+      const sku = $("newSku").value.trim();
+      const product = $("newProduct").value.trim();
+      const qty = Number($("newQty").value || 0);
+      const rmb = Number($("newRmb").value || 0);
+      const notes = $("newNotes").value.trim();
+      if (!sku || !product || qty <= 0 || rmb < 0) return;
+      products = products.filter((item) => item.sku !== sku).concat({ sku, product, qty, rmb, notes });
+      state.manualShopify.delete(sku);
+      state.manualOffline.delete(sku);
+      calculate();
+    }
+
+    function exportCsv() {
+      const model = getModel();
+      const header = ["sku", "product", "qty", "factory_price_rmb", "landed_cost_cad", "shopify_price_cad", "offline_price_cad", "floor_price_cad", "online_margin", "gst_included_price_cad", "offline_margin", "notes"];
+      const lines = [header.join(",")].concat(products.map((item) => {
+        const row = calculateProduct(item, model);
+        return [
+          row.sku,
+          row.product,
+          row.qty,
+          row.rmb,
+          row.cost.toFixed(2),
+          row.manualShopify,
+          row.manualOffline,
+          row.floorPrice,
+          pct(row.onlineMargin),
+          row.gstPrice.toFixed(2),
+          pct(row.offlineMargin),
+          row.notes || ""
+        ].map((value) => `"${String(value).replaceAll('"', '""')}"`).join(",");
+      }));
+      const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "cxy-wigs-pricing.csv";
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    document.querySelectorAll(".controls input, .controls select").forEach((input) => input.addEventListener("input", calculate));
+    $("addProduct").addEventListener("click", addProduct);
+    $("loadExamples").addEventListener("click", () => { products = examples.map((item) => ({ ...item })); state.manualShopify.clear(); state.manualOffline.clear(); calculate(); });
+    $("clearProducts").addEventListener("click", () => { products = []; state.manualShopify.clear(); state.manualOffline.clear(); calculate(); });
+    $("exportCsv").addEventListener("click", exportCsv);
+    $("resetManualPrices").addEventListener("click", () => { state.manualShopify.clear(); state.manualOffline.clear(); calculate(); });
+    calculate();
+  </script>
+</body>
+</html>
