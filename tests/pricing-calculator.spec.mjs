@@ -25,9 +25,20 @@ test.describe("public pricing calculator", () => {
     await page.locator("#newRmb").fill("200");
     await page.getByRole("button", { name: "添加商品" }).click();
     await expect(page.locator("#pricingRows tr")).toHaveCount(1);
-    await expect(page.getByText("TEST-001")).toBeVisible();
+    await expect(page.locator("#statusMessage")).toHaveText("已添加 TEST-001");
+    await expect(page.locator("#pricingRows tr").first().locator("td").first()).toHaveText("TEST-001");
     await expect(page.locator("#pricingRows tr").first().locator("td").nth(4)).toHaveText("C$49.27");
     await expect(page.locator("#pricingRows tr").first().locator("td").nth(5)).toHaveText("C$139.00");
+  });
+
+  test("resets manual prices and shows a status message", async ({ page }) => {
+    await page.getByRole("button", { name: "加载示例" }).click();
+    const firstRow = page.locator("#pricingRows tr").first();
+    await firstRow.locator('input[data-kind="shopify"]').fill("399");
+    await expect(firstRow.locator('input[data-kind="shopify"]')).toHaveValue("399");
+    await page.getByRole("button", { name: "重置手动价" }).click();
+    await expect(firstRow.locator('input[data-kind="shopify"]')).toHaveValue("139");
+    await expect(page.locator("#statusMessage")).toHaveText("手动价格已恢复为建议价");
   });
 
   test("updates model when freight changes", async ({ page }) => {
@@ -41,5 +52,30 @@ test.describe("public pricing calculator", () => {
     await expect(page.locator("#pricingRows tr")).toHaveCount(3);
     await expect(page.locator(".controls")).toBeVisible();
     await expect(page.locator(".table-wrap")).toBeVisible();
+  });
+
+  test("explains all editable fields", async ({ page }) => {
+    const hints = [
+      "1 元人民币换多少加币",
+      "本批商品的人民币总货款",
+      "本批货从中国发到加拿大",
+      "每件商品在加拿大的包装",
+      "Calgary/Alberta 常用 5%",
+      "控制建议售价的显示方式",
+      "线上售价换算系数",
+      "Calgary 线下挂牌价系数",
+      "最低可接受成交价参考",
+      "线上支付费、广告",
+      "线下收款、沟通",
+      "商品编号",
+      "给自己看的商品名称",
+      "这款商品有几件",
+      "单件出厂价人民币",
+      "可写颜色、密度"
+    ];
+
+    for (const hint of hints) {
+      await expect(page.getByText(hint)).toBeVisible();
+    }
   });
 });
